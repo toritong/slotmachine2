@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fruit Slot Machine</title>
+    
+    <!-- React and ReactDOM -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    
+    <style>
+        .container {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #f3f4f6;
+            font-family: Arial, sans-serif;
+        }
+        
+        .slot-machine {
+            background-color: #ffffff;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        
+        .title {
+            font-size: 1.875rem;
+            font-weight: bold;
+            margin-bottom: 2rem;
+        }
+        
+        .reels-container {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-bottom: 2rem;
+            background-color: #f8fafc;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .reel {
+            width: 6rem;
+            height: 6rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            background-color: #fef3c7;
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .number {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+        }
+        
+        .spin-button {
+            background-color: #ef4444;
+            color: white;
+            font-size: 1.25rem;
+            font-weight: bold;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 9999px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin-bottom: 1rem;
+        }
+        
+        .spin-button:hover:not(:disabled) {
+            background-color: #dc2626;
+            transform: scale(1.05);
+        }
+        
+        .spin-button:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+        }
+        
+        .reset-button {
+            background: none;
+            border: none;
+            color: #4b5563;
+            text-decoration: underline;
+            cursor: pointer;
+            font-size: 0.875rem;
+        }
+        
+        .reset-button:hover {
+            color: #1f2937;
+        }
+        
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            max-width: 24rem;
+        }
+        
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const SlotMachine = () => {
+            const [spinning, setSpinning] = React.useState(false);
+            const [usedNumbers, setUsedNumbers] = React.useState(new Set());
+            const [reels, setReels] = React.useState([0, 0, 0]);
+            const [showAlert, setShowAlert] = React.useState(false);
+            
+            const fruits = ['🍎', '🍐', '🍊', '🍋', '🍌', '🍉', '🍇', '🍓', '🍑', '🍍'];
+
+            const generateUniqueNumber = () => {
+                if (usedNumbers.size >= 100) {
+                    setShowAlert(true);
+                    return null;
+                }
+
+                let number;
+                do {
+                    number = Math.floor(Math.random() * 100);
+                } while (usedNumbers.has(number));
+
+                return number;
+            };
+
+            const spin = () => {
+                if (spinning) return;
+                
+                const number = generateUniqueNumber();
+                if (number === null) return;
+
+                setSpinning(true);
+                
+                const firstReel = 0;
+                const middleReel = Math.floor(number / 10);
+                const rightReel = number % 10;
+                
+                let counter = 0;
+                const spinInterval = setInterval(() => {
+                    setReels(prev => [
+                        Math.floor(Math.random() * 10),
+                        Math.floor(Math.random() * 10),
+                        Math.floor(Math.random() * 10)
+                    ]);
+                    
+                    counter++;
+                    if (counter >= 20) {
+                        clearInterval(spinInterval);
+                        setReels([firstReel, middleReel, rightReel]);
+                        setSpinning(false);
+                        setUsedNumbers(prev => new Set([...prev, number]));
+                    }
+                }, 50);
+            };
+
+            const resetGame = () => {
+                setUsedNumbers(new Set());
+                setReels([0, 0, 0]);
+                setShowAlert(false);
+            };
+
+            return (
+                <div className="container">
+                    <div className="slot-machine">
+                        <div className="title">🎰 Fruit Slot Machine 🎰</div>
+                        
+                        <div className="reels-container">
+                            {reels.map((value, index) => (
+                                <div key={index} className="reel">
+                                    {fruits[value]}
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="number">
+                            Number: {reels[1] * 10 + reels[2]}
+                        </div>
+                        
+                        <div className="number">
+                            Numbers used: {usedNumbers.size}/100
+                        </div>
+
+                        <button
+                            onClick={spin}
+                            disabled={spinning || usedNumbers.size >= 100}
+                            className="spin-button"
+                        >
+                            {spinning ? 'Spinning...' : 'SPIN!'}
+                        </button>
+
+                        <button
+                            onClick={resetGame}
+                            className="reset-button"
+                        >
+                            Reset Game
+                        </button>
+
+                        {showAlert && (
+                            <div className="modal-overlay">
+                                <div className="modal">
+                                    <div className="modal-title">Game Over!</div>
+                                    <p>You've used all 100 possible numbers. Click "Reset Game" to start over.</p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        // Render the app
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<SlotMachine />);
+    </script>
+</body>
+</html>
